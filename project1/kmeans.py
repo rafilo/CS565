@@ -95,6 +95,8 @@ def get_list_from_dataset_file(dataset_file):
 	data = dataset[['revenue', 'vote_average']].astype(float).values.tolist()
 	return data
 
+def cost_function(clustering):
+	pass
 
 def k_means(dataset_file, k):
 	tolerance = 0.001
