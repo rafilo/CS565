@@ -62,7 +62,13 @@ def distance(a, b):
 	for i in range(len(a)):
 		squared_distance += (a[i] - b[i])**2
 	return sqrt(squared_distance)
-    
+
+"""
+returns the absolute distance between a and b for 1-dimentional clustering
+"""
+def d1_distance(a, b):
+	return abs(a-b)
+
 
 """
 Given `data_set`, which is an array of arrays,
@@ -70,6 +76,18 @@ return a random set of k points from the data_set
 """
 def generate_k(data_set, k):
     return random.sample(population=data_set, k=k)
+
+"""
+Given `data_set`, which is an array of arrays,
+return a set of k points from the data_set according to k++ rule
+"""
+def generate_kpp(data_set, k):
+    # need to modify 
+	init_k = random.sample(population=data_set, k=1)
+	iteration = k-1
+	while iteration > 0:
+		pass
+    return 
 
 
 def get_list_from_dataset_file(dataset_file):
@@ -84,7 +102,7 @@ def k_means(dataset_file, k):
 	k_points = generate_k(dataset, k)
 	assignments = assign_points(dataset, k_points)
 	old_assignments = None
-	
+
 	while ((assignments - old_assignments)/old_assignments * 100) > tolerance:
         new_centers = update_centers(dataset, assignments)
     	old_assignments = assignments
