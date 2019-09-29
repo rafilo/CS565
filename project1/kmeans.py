@@ -1,8 +1,10 @@
 from collections import defaultdict
 import math
+from math import inf, sqrt
 import random
 import pandas as pd
 import argparse
+import numpy as np 
 
 """
 Accepts a list of points, each with the same number of dimensions.
@@ -15,7 +17,8 @@ def point_avg(points):
 	for curr_point in points:
 		for j in range(len(curr_point)):
 			center_point[j] += curr_point[j]
-	center_point = center_point / len(points)
+	for i in range(len(center_point)):
+		center_point[i] = center_point[i] / len(points)
 
 	return center_point
 
@@ -27,16 +30,14 @@ Return `k` centers in a list
 """
 def update_centers(data_set, assignments):
 	centers = []
-	assignment_dict = {}
-	for i in range(len(assignment)):
-		if i not in assignment_dict:
-			assignment_dict[assignment[i]] = dataset[i]
+	assignment_dict = defaultdict(list)
+	for i in range(len(assignments)):
+		if assignments[i] not in assignment_dict:
+			assignment_dict[assignments[i]] = [data_set[i]]
 		else:
-			for k in range(len(dataset)):
-				assignment_dict[assignment[i]][k] += dataset[i][k]
-	
-	for j in assignment_dict.values():
-		centers.append(point_avg(j))
+			assignment_dict[assignments[i]] += [data_set[i]]
+	for j in assignment_dict:
+		centers.append(point_avg(assignment_dict[j]))
 
 	return centers
 
@@ -86,8 +87,7 @@ def generate_kpp(data_set, k):
 	init_k = random.sample(population=data_set, k=1)
 	iteration = k-1
 	while iteration > 0:
-		pass
-    return 
+		return 1
 
 
 def get_list_from_dataset_file(dataset_file):
@@ -103,15 +103,16 @@ def k_means(dataset_file, k):
 	dataset = get_list_from_dataset_file(dataset_file)
 	k_points = generate_k(dataset, k)
 	assignments = assign_points(dataset, k_points)
-	old_assignments = None
+	old_assignments = [0] * len(assignments)
 
-	while ((assignments - old_assignments)/old_assignments * 100) > tolerance:
-        new_centers = update_centers(dataset, assignments)
-    	old_assignments = assignments
-    	assignments = assign_points(dataset, new_centers)
+	# need to add threshold
+	while assignments != old_assignments:
+		new_centers = update_centers(dataset, assignments)
+		old_assignments = assignments
+		assignments = assign_points(dataset, new_centers)
 	clustering = defaultdict(list)
 	for assignment, point in zip(assignments, dataset):
-    	clustering[assignment].append(point)
+		clustering[assignment].append(point)
 	return clustering
 
 k_means('movie.csv', 3)
