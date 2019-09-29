@@ -1,11 +1,11 @@
 from collections import defaultdict
-import math
 from math import inf, sqrt
 import random
 import pandas as pd
 import argparse
 import numpy as np 
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 """
 read a csv file according to its' path, have to manualy choose dimention
@@ -42,7 +42,7 @@ def point_avg(points):
 """
 Accepts a dataset and a list of assignments; the indexes 
 of both lists correspond to each other.
-Compute the center for each of the assigned groups.
+recompute the center for each of the assigned groups.
 Return updated centers in a list
 """
 def update_centers(data_set, assignments):
@@ -109,7 +109,7 @@ def generate_kpp(data_set, k):
 	while iteration > 0:
 		return 1
 
-#--------------------------------------------------------------
+# -------------------------------------------------------------
 # following function is for 1d kmeans
 """
 returns the absolute distance between a and b for 1-dimentional clustering
@@ -118,7 +118,7 @@ def d1_distance(a, b):
 	return abs(a-b)
 
 
-#-------------------------------------------------------------
+# -------------------------------------------------------------
 # k_means main algorithm
 def k_means(dataset_file, k, init):
 	"""
