@@ -59,29 +59,33 @@ def update_centers(data_set, assignments):
 	return centers
 
 """
+Returns the Euclidean distance between a and b (for dimention >= 2)
+"""
+def euclidean_distance(a, b):
+	squared_distance = 0
+	for i in range(len(a)):
+		squared_distance += (a[i] - b[i])**2
+	return sqrt(squared_distance)
+
+"""
 assign rest of points to its nearest cluster center
 """
-def assign_points(data_points, centers):
+def assign_points(data_points, centers, init):
     assignments = []
     for point in data_points:
         shortest = inf  # positive infinity
         shortest_index = 0
         for i in range(len(centers)):
-            val = distance(point, centers[i])
+			if init == '1d':
+				val = d1_distance(point, centers[i])
+			else:
+            	val = euclidean_distance(point, centers[i])
             if val < shortest:
                 shortest = val
                 shortest_index = i
         assignments.append(shortest_index)
     return assignments
 
-"""
-Returns the Euclidean distance between a and b (for dimention >= 2)
-"""
-def distance(a, b):
-	squared_distance = 0
-	for i in range(len(a)):
-		squared_distance += (a[i] - b[i])**2
-	return sqrt(squared_distance)
 
 """
 return a random set of k points from the data_set
@@ -91,12 +95,23 @@ def generate_k(data_set, k):
 
 # -------------------------------------------------------------
 # following function is for k++
-
+def kpp_distance(a, b):
+	squared_distance = 0
+	for i in range(len(a)):
+		squared_distance += (a[i] - b[i])**2
+	return squared_distance
 """
 choose the next point with max proportional probability in k-means++
 """
 def max_prop_probability(init_point, res_points):
-	pass
+	prop_dis_list = []
+	prop_denominator = 0 
+	for i in res_points:
+		prop_denominator += kpp_distance(init_point, i)
+
+	for k in res_points:
+		prop_dis_list.append((kpp_distance(init_point,k))/prop_denominator)
+	return prop_dis_list.index(max(prop_dis_list))
 
 """
 Given `data_set`, which is an array of arrays,
@@ -105,9 +120,13 @@ return a set of k points from the data_set according to k++ rule
 def generate_kpp(data_set, k):
     # need to modify 
 	init_k = random.sample(population=data_set, k=1)
-	iteration = k-1
-	while iteration > 0:
-		return 1
+	curr_k = init_k[0]
+	while k-1 > 0:
+		next_k = data_set[max_prop_probability(curr_k, data_set)]
+		init_k.append(next_k)
+		curr_k = next_k
+		k -= 1
+	return init_k
 
 # -------------------------------------------------------------
 # following function is for 1d kmeans
@@ -132,13 +151,9 @@ def k_means(dataset_file, k, init):
 	if init == 'random':
 		k_points = generate_k(dataset, k)
 	elif init == 'k-means++':
-		# need to implement
-		pass
-	elif init == '1d':
-		# need to implement
-		pass
+		k_points = generate_kpp(dataset,k)
 
-	assignments = assign_points(dataset, k_points)
+	assignments = assign_points(dataset, k_points, init)
 	old_assignments = [0] * len(assignments)
 	final_centers = []
 
@@ -156,11 +171,13 @@ def k_means(dataset_file, k, init):
 	
 	# outputs
 	final_df = pd.DataFrame({'id': idset, 'label': assignments})
-	final_df.to_csv('output.csv', index=False, header=True)
+	final_df.to_csv('output_k++.csv', index=False, header=True)
 	return final_df
 
 parser = argparse.ArgumentParser()
 #parser.add_argument()
-k_means('./movie.csv', 5, 'random')
+k_means('./movie.csv', 3, 'k-means++')
+
+
 
 
