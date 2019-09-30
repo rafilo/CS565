@@ -17,12 +17,12 @@ def get_list_from_dataset_file(dataset_file):
 	return data, idset
 
 """
-cost function, not implemented yer
+cost function, not implemented yet
+for each cluster, calculate the distance between points in the cluster and
+cluster center. return sum calculated distance of all cluster
 """
-def cost_function(clustering):
-	tolerance = 0.001
+def cost_function(clustering, center):
 	pass
-
 
 """
 Accepts a list of points, each with the same number of dimensions.
@@ -71,20 +71,22 @@ def euclidean_distance(a, b):
 assign rest of points to its nearest cluster center
 """
 def assign_points(data_points, centers, init):
-    assignments = []
-    for point in data_points:
-        shortest = inf  # positive infinity
-        shortest_index = 0
-        for i in range(len(centers)):
+	assignments = []
+	for point in data_points:
+		shortest = inf  # positive infinity
+		shortest_index = 0
+		for i in range(len(centers)):
+			val = 0
 			if init == '1d':
 				val = d1_distance(point, centers[i])
 			else:
-            	val = euclidean_distance(point, centers[i])
-            if val < shortest:
-                shortest = val
-                shortest_index = i
-        assignments.append(shortest_index)
-    return assignments
+				val = euclidean_distance(point, centers[i])
+
+			if val < shortest:
+				shortest = val
+				shortest_index = i
+		assignments.append(shortest_index)
+	return assignments
 
 
 """
@@ -156,12 +158,11 @@ def k_means(dataset_file, k, init):
 	assignments = assign_points(dataset, k_points, init)
 	old_assignments = [0] * len(assignments)
 	final_centers = []
-
 	# need to add threshold
 	while assignments != old_assignments:
 		new_centers = update_centers(dataset, assignments)
 		old_assignments = assignments
-		assignments = assign_points(dataset, new_centers)
+		assignments = assign_points(dataset, new_centers, init)
 		final_centers = new_centers
 
 	# assign group after threshold is met
