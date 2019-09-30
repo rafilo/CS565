@@ -148,6 +148,7 @@ def k_means(dataset_file, k, init):
 	3. loop until centers don't change anymore (or use lost function)
 	4. output .csv file with movie's id and label
 	"""
+	iteration = 10
 	dataset, idset = get_list_from_dataset_file(dataset_file)
 
 	if init == 'random':
@@ -170,10 +171,20 @@ def k_means(dataset_file, k, init):
 	for assignment, point in zip(assignments, dataset):
 		clustering[assignment].append(point)
 	
-	# outputs
+	# outputs / need to move to cost_compare
 	final_df = pd.DataFrame({'id': idset, 'label': assignments})
 	final_df.to_csv('output_k++.csv', index=False, header=True)
 	return final_df
+
+def k_means_cost(clustering):
+	if clustering is None or len(clustering) == 0:
+		raise Exception("clustering should not be empty!")
+	cost = 0
+	for k, v in clustering.items():
+		center = point_avg(v)
+		for point in v:
+			cost += euclidean_distance(center, point)**2
+	return cost
 
 parser = argparse.ArgumentParser()
 #parser.add_argument()
