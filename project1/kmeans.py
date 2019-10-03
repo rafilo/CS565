@@ -6,23 +6,31 @@ import argparse
 import numpy as np 
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+def get_list_from_dataset_file_PCA(dataset_file):
+    dataset = pd.read_csv(dataset_file)
+    vote_avg = dataset['vote_average']
+    vote_cnt = dataset['vote_count']
+    total_vote = []
+    for i in range(len(vote_avg)):
+        total_vote.append(vote_avg[i] * vote_cnt[i])
+    dataset['total_votes'] = total_vote
+    sorted_df = dataset.sort_values('total_votes', ascending=False)
+    top_df = sorted_df.head(250)
+    final_df = top_df[['total_votes', 'popularity', 'revenue']].astype(float).values.tolist()
+    idset = top_df['id']
+    return final_df, idset
 
 """
 read a csv file according to its' path, have to manualy choose dimention
 """
 def get_list_from_dataset_file(dataset_file):
 	dataset = pd.read_csv(dataset_file)
-	data = dataset[['revenue', 'vote_average', 'popularity']].astype(float).values.tolist()
+	data = dataset[['revenue', 'popularity','vote_average']].astype(float).values.tolist()
 	idset = dataset['id']
 	return data, idset
 
-"""
-cost function, not implemented yet
-for each cluster, calculate the distance between points in the cluster and
-cluster center. return sum calculated distance of all cluster
-"""
-def cost_function(clustering, center):
-	pass
 
 """
 Accepts a list of points, each with the same number of dimensions.
@@ -93,7 +101,7 @@ def assign_points(data_points, centers, init):
 return a random set of k points from the data_set
 """
 def generate_k(data_set, k):
-    return random.sample(population=data_set, k=k)
+    return random.sample(population=data_set, k=k) 
 
 # -------------------------------------------------------------
 # following function is for k++
@@ -105,15 +113,16 @@ def kpp_distance(a, b):
 """
 choose the next point with max proportional probability in k-means++
 """
-def max_prop_probability(init_point, res_points):
+def choose_prop_probability(init_point, res_points):
 	prop_dis_list = []
-	prop_denominator = 0 
+	prop_denominator = 0
 	for i in res_points:
+		print(i)
 		prop_denominator += kpp_distance(init_point, i)
 
 	for k in res_points:
 		prop_dis_list.append((kpp_distance(init_point,k))/prop_denominator)
-	return prop_dis_list.index(max(prop_dis_list))
+	return prop_dis_list
 
 """
 Given `data_set`, which is an array of arrays,
@@ -121,11 +130,14 @@ return a set of k points from the data_set according to k++ rule
 """
 def generate_kpp(data_set, k):
     # need to modify 
+	"""
+	choose other points proportional to the probability!!!
+	"""
 	init_k = random.sample(population=data_set, k=1)
-	curr_k = init_k[0]
+	curr_k = init_k
 	while k-1 > 0:
-		next_k = data_set[max_prop_probability(curr_k, data_set)]
-		init_k.append(next_k)
+		next_k = random.choices(data_set, weights=choose_prop_probability(init_k[0], data_set))
+		init_k.append(next_k[0])
 		curr_k = next_k
 		k -= 1
 	return init_k
@@ -136,7 +148,10 @@ def generate_kpp(data_set, k):
 returns the absolute distance between a and b for 1-dimentional clustering
 """
 def d1_distance(a, b):
-	return abs(a-b)
+	d1_dist = 0
+	for i in range(len(a)):
+		d1_dist += abs(a[i]-b[i])
+	return d1_dist
 
 
 # -------------------------------------------------------------
@@ -148,9 +163,13 @@ def k_means(dataset_file, k, init):
 	3. loop until centers don't change anymore (or use lost function)
 	4. output .csv file with movie's id and label
 	"""
-	iteration = 10
 	dataset, idset = get_list_from_dataset_file(dataset_file)
 
+	if init == '1d':
+		regulized_data = StandardScaler().fit_transform(dataset)
+		pca = PCA(n_components=1)
+		dataset = pca.fit_transform(regulized_data)
+		k_points = generate_k(list(dataset), k)
 	if init == 'random':
 		k_points = generate_k(dataset, k)
 	elif init == 'k-means++':
@@ -173,23 +192,93 @@ def k_means(dataset_file, k, init):
 	
 	# outputs / need to move to cost_compare
 	final_df = pd.DataFrame({'id': idset, 'label': assignments})
-	final_df.to_csv('output_k++.csv', index=False, header=True)
-	return final_df
+	output_format = 'output_' + init + '.csv'
+	final_df.to_csv(output_format, index=False, header=True)
+	return final_df, assignments
 
 def k_means_cost(clustering):
 	if clustering is None or len(clustering) == 0:
 		raise Exception("clustering should not be empty!")
 	cost = 0
-	for k, v in clustering.items():
+	
+	for _, v in clustering.items():
 		center = point_avg(v)
+		print('curr center:', center)
 		for point in v:
 			cost += euclidean_distance(center, point)**2
 	return cost
 
 parser = argparse.ArgumentParser()
 #parser.add_argument()
-k_means('./movie.csv', 3, 'k-means++')
+_, labels = k_means('./movie.csv', 3, 'random')
+"""
+label1_x =[]
+label1_y =[]
 
+label2_x=[]
+label2_y=[]
 
+label3_x=[]
+label3_y=[]
 
+center_x =[]
+center_y=[]
+for a in centers:
+	center_x.append(a[0])
+	center_y.append(a[1])
+for i in clst[0]:
+	label1_x.append(i[0])
+	label1_y.append(i[1])
 
+for k in clst[1]:
+	label2_x.append(k[0])
+	label2_y.append(k[1])
+
+for j in clst[2]:
+	label3_x.append(j[0])
+	label3_y.append(j[1])
+
+plt.xlabel('total votes')
+plt.ylabel('popularity')
+plt.scatter(label1_x, label1_y, c='r', alpha=0.5)
+plt.scatter(label2_x, label2_y, c='g', alpha=0.5)
+plt.scatter(label3_x, label3_y, c='b', alpha=0.5)
+plt.scatter(center_x, center_y, c='black', s=200)
+plt.show()
+"""
+"""
+_, labels = k_means('./movie.csv', 3, 'random')
+data,_ = get_list_from_dataset_file_PCA('./movie.csv')
+regulized_data = StandardScaler().fit_transform(data)
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(regulized_data)
+principalDf = pd.DataFrame(data = principalComponents
+             , columns = ['principal component 1', 'principal component 2'])
+df_labels = pd.DataFrame({'labels': labels})
+finalDf = pd.concat([principalDf, df_labels], axis = 1)
+plot_df = finalDf.astype(float).values.tolist()
+
+label1_x =[]
+label1_y =[]
+
+label2_x=[]
+label2_y=[]
+
+label3_x=[]
+label3_y=[]
+for i in plot_df:
+	if i[2] == 0.0:
+		label1_x.append(i[0])
+		label1_y.append(i[1])
+	if i[2] == 1.0:
+		label2_x.append(i[0])
+		label2_y.append(i[1])
+	if i[2] == 2.0:
+		label3_x.append(i[0])
+		label3_y.append(i[1])
+
+plt.scatter(label1_x, label1_y, c='r', alpha=0.5, label='group1')
+plt.scatter(label2_x, label2_y, c='g', alpha=0.5, label='group2')
+plt.scatter(label3_x, label3_y, c='b', alpha=0.5, label='group3')
+plt.show()
+"""
