@@ -117,7 +117,6 @@ def choose_prop_probability(init_point, res_points):
 	prop_dis_list = []
 	prop_denominator = 0
 	for i in res_points:
-		print(i)
 		prop_denominator += kpp_distance(init_point, i)
 
 	for k in res_points:
@@ -210,7 +209,7 @@ def k_means_cost(clustering):
 
 parser = argparse.ArgumentParser()
 #parser.add_argument()
-_, labels = k_means('./movie.csv', 3, 'random')
+_, labels = k_means('./movie.csv', 3, 'k-means++')
 """
 label1_x =[]
 label1_y =[]
