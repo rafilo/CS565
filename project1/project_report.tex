@@ -7,7 +7,7 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage[makeroom]{cancel}
-
+\graphicspath{ {./} }
 \SetKwInOut{Parameter}{parameter}
 
 \HWauthor{Zixuan Wen}{U29106598}
@@ -22,14 +22,26 @@
 \maketitle
 \HWproblem
 see attached source code
+
 \HWproblem
-Exercice 2
+graph for k-means performance under different number of clusters:\\
+\includegraphics[width=8cm, height=6cm]{performance_k}\\
+From the graph above, we can see that the cluster represents the data reasonably well when the number of cluster is around $3$ to $5$.\\
+graph for k-means++ performance under different number of clusters:\\
+\includegraphics[width=8cm, height=6cm]{performance_k++}\\
+From the graph above, we can see that the cluster represents the data reasonably well when the number of cluster is around $3$ to $5$.\\
+
 \HWproblem
-Exercice 3
+graph for cluster after PCA analyze:\\
+\includegraphics[width=8cm, height=6cm]{PCA_analyze}\\
+From the graph above, since the data is relatively centered at the same spot due to the $total_votes$ feature, which is obtained from multiplying$ vote_average $ and $vote_count$. \\
+So the cluster tend to have a long oval shape instead of regular circle one.
 \HWproblem
-Exercice 4
+graph for 1d-kmeans performance under different number of clusters:\\
+\includegraphics[width=8cm, height=6cm]{performance_1d}\\
+From the graph above, we can see that the cluster represents the data reasonably well when the number of cluster is around $5$ to $7$.
 \HWproblem
-Exercice 5
+The computed disagreement distance of cluster produced by k-means++ and cluster produced by 1d-kmeans is $2778614$
 
 
 \end{document}

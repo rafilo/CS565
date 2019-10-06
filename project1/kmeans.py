@@ -18,7 +18,7 @@ def get_list_from_dataset_file_PCA(dataset_file):
     dataset['total_votes'] = total_vote
     sorted_df = dataset.sort_values('total_votes', ascending=False)
     top_df = sorted_df.head(250)
-    final_df = top_df[['total_votes', 'popularity', 'revenue']].astype(float).values.tolist()
+    final_df = top_df[['revenue', 'total_votes']].astype(float).values.tolist()
     idset = top_df['id']
     return final_df, idset
 
@@ -177,13 +177,14 @@ def k_means(dataset_file, k, init):
 	assignments = assign_points(dataset, k_points, init)
 	old_assignments = [0] * len(assignments)
 	final_centers = []
+	final_assignments = []
 	# need to add threshold
 	while assignments != old_assignments:
 		new_centers = update_centers(dataset, assignments)
 		old_assignments = assignments
 		assignments = assign_points(dataset, new_centers, init)
 		final_centers = new_centers
-
+		final_assignments = assignments
 	# assign group after threshold is met
 	clustering = defaultdict(list)
 	for assignment, point in zip(assignments, dataset):
@@ -191,9 +192,8 @@ def k_means(dataset_file, k, init):
 	
 	# outputs / need to move to cost_compare
 	final_df = pd.DataFrame({'id': idset, 'label': assignments})
-	output_format = 'output_' + init + '.csv'
-	final_df.to_csv(output_format, index=False, header=True)
-	return final_df, assignments
+	final_df.to_csv('output.csv', index=False, header=True)
+	return final_assignments
 
 def k_means_cost(clustering):
 	if clustering is None or len(clustering) == 0:
@@ -202,14 +202,31 @@ def k_means_cost(clustering):
 	
 	for _, v in clustering.items():
 		center = point_avg(v)
-		print('curr center:', center)
 		for point in v:
 			cost += euclidean_distance(center, point)**2
 	return cost
 
+# need implementation
+def disagreement_dist(assignment1, assignment2):
+	dis_distance = 0
+	for i in range(len(assignment1)):
+		for j in range(i,len(assignment1)):
+			if (assignment1[i] == assignment1[j]) and (assignment2[i] != assignment2[j]):
+				dis_distance += 1
+			elif (assignment1[i] != assignment1[j]) and (assignment2[i] == assignment2[j]):
+				dis_distance += 1
+	return dis_distance
+
 parser = argparse.ArgumentParser()
-#parser.add_argument()
-_, labels = k_means('./movie.csv', 3, 'k-means++')
+parser.add_argument('filename', help='input file')
+parser.add_argument('clusters', type=int,help='number of cluster', default=3)
+parser.add_argument('init', help='type of kmeans', default='random')
+
+#args = parser.parse_args()
+#k_means(args.filename, args.clusters, args.init)
+kmeanspass = k_means('./movie.csv', 3, 'k-means++')
+#kmeans1d = k_means('./movie.csv', 3, '1d')
+
 """
 label1_x =[]
 label1_y =[]
