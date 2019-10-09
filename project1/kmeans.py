@@ -152,6 +152,112 @@ def d1_distance(a, b):
 		d1_dist += abs(a[i]-b[i])
 	return d1_dist
 
+# -------------------------------------------------------------
+# dynamic programming for 1d
+"""
+calculate the unit cost given the range of points
+points: input data
+i, j: indices
+"""
+def unit_cost(points, i, j):
+	point_range = points[i:j]
+	for a in range(len(point_range)):
+		point_range[a] = point_range[a][0]
+	rep = (1/(j-i+1)) * sum(point_range)
+	cost = 0
+	for point in point_range:
+		cost += (point - rep) ** 2
+	return cost
+
+"""
+run the dynamic programming
+----------- 
+X: set of 1-dimentional data
+n: number of points
+k: number of clustering
+"""
+def OPT(X, n, k):
+    partition_indices = []
+    opt = []
+	# use for visualize
+    result = []
+
+	# initialize opt cost matrix / partition indices
+    for i in range(k + 1):
+        opt.append([0] * n)
+        partition_indices.append([-1] * n)
+        result.append([])
+
+	# main part of dynamic programming
+	# init unit_cost for 1st iter
+    for i in range(n):                                     
+        opt[1][i] = unit_cost(X, 0, i)
+
+	# OPT(a,j) = min {OPT(a-1,j) + unit_cost(j+1, q)}
+    for clusters in range(2, k + 1):
+        for points in range (clusters - 1, n):
+            min =  float('inf')
+            partition_index = -1
+
+            for j in range(clusters - 2, points):
+                if opt[clusters - 1][j] + unit_cost(X, j + 1, points) < min:
+                    min = opt[clusters - 1][j] + unit_cost(X, j + 1, points)
+                    partition_index = j
+            partition_indices[clusters][points] = partition_index
+            opt[clusters][points] = min
+
+    partition_indices = find_partition_indices(partition_indices, n, k)
+    result = partition(X, partition_indices)
+    return partition_indices
+
+"""
+find the partition indices according to the result of OPT
+partition_indices: partition indices found in the OPT()
+n: number of points
+k: number of clusters
+"""
+def find_partition_indices(partition_indices, n, k):
+    partition_index = [0] * (k - 1)
+    partition_index[0] = partition_indices[k][n - 1]
+    q = 0
+	# back track
+    for i in range(k-1, 1, -1):
+        for j in range(n-1, i-2, -1):
+            if j == partition_index[q]:
+                partition_index[q+1] = partition_indices[i][j]
+                q = q + 1
+                break
+    partition_index.reverse()
+
+    return partition_index
+"""
+find the cluster that a point belongs to
+X: input data
+partition_indices
+"""
+def partition(X, partition_indices):
+    result = [[]* (len(partition_indices))]
+    data_label = []
+    j = 0
+    q = 0
+    for i in range(len(X)):
+        if q < len(partition_indices):
+            if i <= partition_indices[q]:
+                result[j].append(X[i])
+            else:
+                q = q + 1
+                j = j + 1
+                result[j].append(X[i])
+        else:
+            result[len(partition_indices)].append(X[i])
+    for i in range(len(result)):
+        for j in range (len(result[i])):
+            data_clust = []
+            data_clust.append(result[i][j])
+            data_clust.append(i)
+            data_label.append(data_clust)
+    return data_label
+
 
 # -------------------------------------------------------------
 # k_means main algorithm
@@ -193,7 +299,7 @@ def k_means(dataset_file, k, init):
 	# outputs / need to move to cost_compare
 	final_df = pd.DataFrame({'id': idset, 'label': assignments})
 	final_df.to_csv('output.csv', index=False, header=True)
-	return final_assignments
+	return final_assignments, final_centers
 
 def k_means_cost(clustering):
 	if clustering is None or len(clustering) == 0:
@@ -206,7 +312,7 @@ def k_means_cost(clustering):
 			cost += euclidean_distance(center, point)**2
 	return cost
 
-# need implementation
+# disagreement_dist
 def disagreement_dist(assignment1, assignment2):
 	dis_distance = 0
 	for i in range(len(assignment1)):
@@ -217,6 +323,8 @@ def disagreement_dist(assignment1, assignment2):
 				dis_distance += 1
 	return dis_distance
 
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('filename', help='input file')
 parser.add_argument('clusters', type=int,help='number of cluster', default=3)
@@ -224,9 +332,15 @@ parser.add_argument('init', help='type of kmeans', default='random')
 
 #args = parser.parse_args()
 #k_means(args.filename, args.clusters, args.init)
-kmeanspass = k_means('./movie.csv', 3, 'k-means++')
-#kmeans1d = k_means('./movie.csv', 3, '1d')
 
+#kmeanspass = k_means('./movie.csv', 3, 'k-means++')
+#kmeans1d = k_means('./movie.csv', 3, '1d')
+dataset, idset = get_list_from_dataset_file('./movie.csv')
+regulized_data = StandardScaler().fit_transform(dataset)
+pca = PCA(n_components=1)
+dataset = pca.fit_transform(regulized_data)
+result = OPT(dataset, len(dataset), 3)
+print(result)
 """
 label1_x =[]
 label1_y =[]
